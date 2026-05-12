@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ゆる株日記 v12.0 Ultra</title>
+    <title>ゆる株日記 v13.0 Precision</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --accent: #ffb7b2; --win: #ff5252; --lose: #4caf50; --bg: #fffcf9; }
-        body { font-family: 'Hiragino Sans', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: #444; line-height: 1.6; }
+        body { font-family: 'Hiragino Sans', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: #444; }
         header { background: var(--accent); color: white; text-align: center; padding: 20px; font-weight: bold; border-radius: 0 0 25px 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
         
         /* カレンダー */
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: white; padding: 12px; border-radius: 20px; border: 1px solid #eee; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: white; padding: 10px; border-radius: 20px; border: 1px solid #eee; }
         .day { min-height: 80px; display: flex; flex-direction: column; align-items: center; border-radius: 12px; cursor: pointer; border: 2px solid transparent; background: #fafafa; }
         .day.selected { border-color: var(--accent); background: #fff5f0; }
-        .day-num { font-size: 0.9rem; margin-top: 5px; font-weight: bold; }
-        .day-profit { font-size: 0.6rem; font-weight: bold; }
+        .day-num { font-size: 0.9rem; margin-top: 5px; }
 
         /* カード・バッジ */
-        .card { background: white; padding: 20px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
+        .card { background: white; padding: 20px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; overflow: hidden; }
         h3 { margin: 0 0 15px; font-size: 1.1rem; color: var(--accent); border-left: 5px solid var(--accent); padding-left: 12px; }
-        .pct-badge { font-size: 0.8rem; font-weight: bold; padding: 3px 10px; border-radius: 6px; color: white; display: inline-block; margin-top: 5px; }
+        .badge { font-size: 0.8rem; font-weight: bold; padding: 4px 12px; border-radius: 8px; color: white; display: inline-block; margin-top: 5px; }
         .win-bg { background: var(--win); }
         .lose-bg { background: var(--lose); }
 
-        /* 図解SVG */
-        .svg-box { width: 100%; height: 100px; background: #fdfdfd; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 10px 0; border: 1px dashed #ddd; }
+        /* 【修正】図解SVGの見切れ防止 */
+        .svg-wrapper { width: 100%; max-width: 300px; height: 120px; margin: 10px auto; background: #fdfdfd; border-radius: 15px; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; overflow: visible; }
+        svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
-        /* 入力エリア */
+        /* フォーム */
         .form-group { margin-bottom: 15px; }
         label { font-size: 0.8rem; font-weight: bold; color: #777; display: block; margin-bottom: 5px; }
         input, textarea { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
@@ -44,7 +44,7 @@
 </head>
 <body>
 
-<header>📈 ゆる株日記 Master v12.0</header>
+<header>📈 ゆる株日記 Master v13.0</header>
 
 <div id="tab-cal" class="tab-content active">
     <div class="calendar" id="calendar"></div>
@@ -52,7 +52,7 @@
         <div class="card">
             <h3 id="detail-date">詳細</h3>
             <div id="trade-list-inner"></div>
-            <button onclick="openForm()">＋ この日に取引を追加</button>
+            <button onclick="openForm()">＋ トレードを追加</button>
             <button class="btn-sub" onclick="document.getElementById('daily-detail-area').style.display='none'">閉じる</button>
         </div>
     </div>
@@ -60,10 +60,14 @@
 
 <div id="tab-stats" class="tab-content">
     <div class="card" style="background: linear-gradient(135deg, var(--accent), #ffcfcc); color:white; border:none; text-align:center;">
-        <div style="font-size:0.9rem;">累計損益合計</div>
+        <div style="font-size:0.9rem;">総損益額</div>
         <div style="font-size:2.4rem; font-weight:bold;" id="grand-total">0円</div>
+        <div style="font-size:1rem; margin-top:5px; background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 15px; border-radius: 20px;" id="total-pct-area">
+            総利益率: <span id="grand-total-pct">0.00%</span>
+        </div>
+        <div style="font-size:0.6rem; opacity:0.8; margin-top:5px;">※投資元本（累計買付額）に対する比率</div>
     </div>
-    <div class="card"><h3>資産推移（累積グラフ）</h3><canvas id="profitChart" height="180"></canvas></div>
+    <div class="card"><h3>資産推移グラフ</h3><canvas id="profitChart" height="180"></canvas></div>
 </div>
 
 <div id="tab-dict" class="tab-content">
@@ -72,8 +76,8 @@
 
 <div id="tab-entry" class="tab-content">
     <div class="card">
-        <h3>トレード記録入力</h3>
-        <div class="form-group"><label>銘柄名</label><input type="text" id="stock-name" placeholder="例：トヨタ"></div>
+        <h3>トレード入力</h3>
+        <div class="form-group"><label>銘柄名</label><input type="text" id="stock-name" placeholder="例：楽天グループ"></div>
         <div style="display:flex; gap:10px;" class="form-group">
             <div style="flex:1;"><label>買単価（円）</label><input type="number" id="buy-price"></div>
             <div style="flex:1;"><label>売単価（円）</label><input type="number" id="sell-price"></div>
@@ -88,31 +92,27 @@
 
 <nav class="nav">
     <div class="nav-item active" id="nav-cal" onclick="showTab('cal')">📅<br>日記</div>
-    <div class="nav-item" id="nav-stats" onclick="showTab('stats')">📈<br>分析</div>
+    <div class="nav-item" id="nav-stats" onclick="showTab('stats')">📈<br>資産</div>
     <div class="nav-item" id="nav-dict" onclick="showTab('dict')">📖<br>図鑑</div>
 </nav>
 
 <script>
-    // 【網羅性強化】25項目以上の知見データ
+    // 【修正・増量】見切れないSVG座標設計
     const dictData = [
-        { cat: '形状', name: 'ダブルボトム', desc: '底打ちの定番。二度の反発で上昇へ。', path: 'M10,20 L30,70 L50,40 L70,70 L90,20', col: '#ff5252' },
-        { cat: '形状', name: '三尊', desc: '天井のサイン。中央が高い3つの山。', path: 'M10,60 L25,40 L40,50 L50,20 L60,50 L75,40 L90,60', col: '#4caf50' },
-        { cat: '手法', name: '押し目買い', desc: '上昇トレンド中の一時的な下げを狙う。', path: 'M10,80 L30,40 L50,60 L90,10', col: '#ff5252' },
-        { cat: '手法', name: '吹き値売り', desc: '急騰した場面で欲張らずに利益を確定する。', path: 'M10,80 L60,10 L90,40', col: '#4caf50' },
-        { cat: '形状', name: 'カップウィズハンドル', desc: '取っ手付きカップ。上放れで急騰の可能性。', path: 'M10,20 C10,90 80,90 80,20 L95,35 L80,50', col: '#ff5252' },
-        { cat: '現象', name: 'デッドキャットバウンス', desc: '暴落後の偽リバウンド。騙しに注意。', path: 'M5,10 L30,85 L50,60 L70,90', col: '#4caf50' },
-        { cat: '基本', name: 'ゴールデンクロス', desc: '短期線が長期線を下から上に抜ける買いサイン。' },
-        { cat: '基本', name: 'デッドクロス', desc: '短期線が長期線を上から下に抜ける売りサイン。' },
-        { cat: '指標', name: 'RSI', desc: '30%以下は売られすぎ、70%以上は買われすぎ。' },
-        { cat: '指標', name: 'ボリンジャーバンド', desc: '±2σの範囲に価格の95%が収まる統計的指標。' },
-        { cat: '用語', name: '窓埋め', desc: '開いた窓は将来的に埋まる習性がある。' },
-        { cat: '用語', name: '損切り', desc: '損失を限定させるための最も重要な技術。' },
-        { cat: '用語', name: '利乗せ', desc: '含み益が出ている状態でさらに買い増す手法。' },
-        { cat: '用語', name: '出来高', desc: '取引された株数。相場のエネルギーを表す。' },
-        { cat: '用語', name: 'ナンピン', desc: '下げ局面で買い増し平均単価を下げること。計画性が必須。' }
+        { cat: '形状', name: 'ダブルボトム', desc: '安値が並ぶ上昇反転の形。', path: 'M10,20 L30,80 L50,40 L70,80 L90,20', col: '#ff5252' },
+        { cat: '形状', name: '三尊', desc: '天井の強力なサイン。', path: 'M10,70 L25,40 L40,60 L50,20 L60,60 L75,40 L90,70', col: '#4caf50' },
+        { cat: '手法', name: '押し目買い', desc: '上昇中の「一時的な下げ」で買う。', path: 'M10,90 L30,30 L50,60 L90,10', col: '#ff5252' },
+        { cat: '手法', name: 'ブレイクアウト', desc: '抵抗線を突き抜けた瞬間を狙う。', path: 'M10,50 L50,50 M50,50 L90,10', col: '#ff5252' },
+        { cat: '形状', name: 'カップウィズハンドル', desc: '取っ手付きカップ。急騰の前兆。', path: 'M10,30 C10,95 80,95 80,30 L95,45 L80,60', col: '#ff5252' },
+        { cat: '指標', name: 'ゴールデンクロス', desc: '短期線が長期線を下から突き抜ける。', path: 'M10,80 L90,20 M10,60 L90,50', col: '#ff5252' },
+        { cat: '基本', name: '損切り', desc: '損失を拡大させないための勇気ある撤退。' },
+        { cat: '基本', name: '利確', desc: '利益を現金化して確定させること。' },
+        { cat: '用語', name: '順張り', desc: 'トレンドと同じ方向にエントリーすること。' },
+        { cat: '用語', name: '逆張り', desc: 'トレンドに逆らって反転を狙うこと。' },
+        { cat: '用語', name: '窓埋め', desc: '相場に開いた「窓」は埋まりやすい。' }
     ];
 
-    let trades = JSON.parse(localStorage.getItem('kabu_v12_final') || '{}');
+    let trades = JSON.parse(localStorage.getItem('kabu_v13_precision') || '{}');
     let selectedDate = "", myChart = null;
 
     function showTab(tab) {
@@ -134,17 +134,15 @@
             const el = document.createElement('div');
             el.className = 'day' + (i === now.getDate() ? ' today' : '') + (selectedDate === dStr ? ' selected' : '');
             let p = 0; if(trades[dStr]) trades[dStr].forEach(t => p += t.profit);
-            el.innerHTML = `<div class="day-num">${i}</div>` + (p !== 0 ? `<div class="day-profit" style="color:${p>0?'var(--win)':'var(--lose)'}">${p>0?'+':''}${p.toLocaleString()}</div>` : "");
-            el.onclick = () => { selectedDate = dStr; renderCalendar(); document.getElementById('daily-detail-area').style.display = 'block'; document.getElementById('detail-date').innerText = dStr + " の詳細"; renderDayTrades(); };
+            el.innerHTML = `<div class="day-num">${i}</div>` + (p !== 0 ? `<div style="font-size:0.6rem; color:${p>0?'var(--win)':'var(--lose)'}; font-weight:bold;">${p>0?'+':''}${p.toLocaleString()}</div>` : "");
+            el.onclick = () => { selectedDate = dStr; renderCalendar(); document.getElementById('daily-detail-area').style.display = 'block'; document.getElementById('detail-date').innerText = dStr; renderDayTrades(); };
             cal.appendChild(el);
         }
     }
 
     function renderDayTrades() {
-        const inner = document.getElementById('trade-list-inner');
-        inner.innerHTML = ""; // 初期化
+        const inner = document.getElementById('trade-list-inner'); inner.innerHTML = "";
         const ds = trades[selectedDate] || [];
-        // 【修正】ここで「+=」を使い、全ての銘柄を表示
         ds.forEach((t, i) => {
             const pct = t.buy !== 0 ? ((t.profit / t.buy) * 100).toFixed(2) : "0.00";
             inner.innerHTML += `
@@ -153,16 +151,15 @@
                         <strong>${t.name}</strong>
                         <div style="text-align:right;">
                             <span style="font-weight:900; font-size:1.2rem;">${t.profit.toLocaleString()}円</span><br>
-                            <span class="pct-badge ${t.profit>=0?'win-bg':'lose-bg'}">${t.profit>=0?'+':''}${pct}%</span>
+                            <span class="badge ${t.profit>=0?'win-bg':'lose-bg'}">${t.profit>=0?'+':''}${pct}%</span>
                         </div>
                     </div>
-                    <div style="font-size:0.75rem; color:#666; margin-top:12px; background:#f9f9f9; padding:12px; border-radius:12px;">
-                        <div><b>単価:</b> 買 ${t.buy} / 売 ${t.sell}</div>
-                        <div style="margin-top:6px;"><b>理由(買):</b> ${t.buyReason || '-'}</div>
-                        <div><b>理由(売):</b> ${t.sellReason || '-'}</div>
-                        <div style="color:var(--accent); margin-top:6px;"><b>学び:</b> ${t.feedback || '-'}</div>
+                    <div style="font-size:0.75rem; color:#666; margin-top:10px; background:#f9f9f9; padding:10px; border-radius:10px;">
+                        <div>買: ${t.buy} / 売: ${t.sell}</div>
+                        <div style="margin-top:5px;"><b>理由:</b> ${t.buyReason || '-'}</div>
+                        <div style="color:var(--accent);"><b>学び:</b> ${t.feedback || '-'}</div>
                     </div>
-                    <button onclick="deleteTrade(${i})" class="btn-sub" style="padding:4px 10px; font-size:0.6rem; width:auto; margin-top:10px;">削除</button>
+                    <button onclick="deleteTrade(${i})" class="btn-sub" style="padding:4px 10px; font-size:0.6rem; width:auto; margin-top:8px;">削除</button>
                 </div>`;
         });
     }
@@ -174,32 +171,36 @@
         if(!n || b === 0) return alert("入力エラー");
         if(!trades[selectedDate]) trades[selectedDate] = [];
         trades[selectedDate].push({ name:n, buy:b, sell:s, profit:s-b, buyReason:document.getElementById('buy-reason').value, sellReason:document.getElementById('sell-reason').value, feedback:document.getElementById('feedback').value });
-        localStorage.setItem('kabu_v12_final', JSON.stringify(trades));
+        localStorage.setItem('kabu_v13_precision', JSON.stringify(trades));
         showTab('cal');
     }
 
     function renderDict() {
-        const container = document.getElementById('dict-container'); container.innerHTML = "<h3>📊 株式用語・形状図鑑</h3>";
+        const container = document.getElementById('dict-container'); container.innerHTML = "<h3>📖 トレード図鑑</h3>";
         dictData.forEach(item => {
-            let svg = item.path ? `<div class="svg-box"><svg width="100" height="60" viewBox="0 0 100 60"><path d="${item.path}" fill="none" stroke="${item.col}" stroke-width="5" stroke-linecap="round"/></svg></div>` : "";
+            let svg = item.path ? `<div class="svg-wrapper"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><path d="${item.path}" fill="none" stroke="${item.col}" stroke-width="5" stroke-linecap="round"/></svg></div>` : "";
             container.innerHTML += `<div class="card"><small>${item.cat}</small><h4>${item.name}</h4>${svg}<p style="font-size:0.8rem;">${item.desc}</p></div>`;
         });
     }
 
     function updateGrandTotal() {
-        let total = 0; Object.keys(trades).forEach(d => trades[d].forEach(t => total += t.profit));
+        let total = 0; let totalBuy = 0;
+        Object.keys(trades).forEach(d => {
+            trades[d].forEach(t => {
+                total += t.profit;
+                totalBuy += t.buy;
+            });
+        });
         document.getElementById('grand-total').innerText = total.toLocaleString() + "円";
+        // 【重要】総損益％の計算
+        const totalPct = totalBuy !== 0 ? ((total / totalBuy) * 100).toFixed(2) : "0.00";
+        document.getElementById('grand-total-pct').innerText = (total > 0 ? "+" : "") + totalPct + "%";
     }
 
     function initChart() {
         const ctx = document.getElementById('profitChart').getContext('2d');
         if(myChart) myChart.destroy();
-        // 【修正】日付を正しくソート
-        const sorted = Object.keys(trades).sort((a,b) => {
-            const [y1, m1, d1] = a.split('-').map(Number);
-            const [y2, m2, d2] = b.split('-').map(Number);
-            return new Date(y1, m1-1, d1) - new Date(y2, m2-1, d2);
-        });
+        const sorted = Object.keys(trades).sort((a,b) => new Date(a.replace(/-/g, '/')) - new Date(b.replace(/-/g, '/')));
         let cum = 0; const labels = [], data = [];
         sorted.forEach(d => {
             let dp = 0; trades[d].forEach(t => dp += t.profit);
@@ -208,10 +209,10 @@
             data.push(cum);
         });
         if(labels.length === 0) return;
-        myChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data, borderColor: '#ffb7b2', backgroundColor: 'rgba(255,183,178,0.2)', fill: true, tension: 0.3 }] } });
+        myChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data, borderColor: '#ffb7b2', backgroundColor: 'rgba(255,183,178,0.2)', fill: true, tension: 0.3 }] }, options: { plugins: { legend: { display: false } } } });
     }
 
-    function deleteTrade(i) { trades[selectedDate].splice(i, 1); if(trades[selectedDate].length===0) delete trades[selectedDate]; localStorage.setItem('kabu_v12_final', JSON.stringify(trades)); renderDayTrades(); renderCalendar(); }
+    function deleteTrade(i) { trades[selectedDate].splice(i, 1); if(trades[selectedDate].length===0) delete trades[selectedDate]; localStorage.setItem('kabu_v13_precision', JSON.stringify(trades)); renderDayTrades(); renderCalendar(); }
     function openForm() { document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById('tab-entry').classList.add('active'); }
     renderCalendar();
 </script>
