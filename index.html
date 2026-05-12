@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ゆる株日記 Pro v5</title>
+    <title>ゆる株日記 Ultimate v5.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -17,53 +17,101 @@
             --trend-text: #4db6ac;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--main-bg); color: var(--text-color); margin: 0; padding-bottom: 90px; }
-        header { background: var(--accent); color: white; text-align: center; padding: 15px; font-weight: bold; border-radius: 0 0 20px 20px; }
+        header { background: var(--accent); color: white; text-align: center; padding: 15px; font-weight: bold; border-radius: 0 0 20px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
         .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* フィルターボタン */
-        .filter-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .filter-btn { padding: 6px 12px; border-radius: 15px; border: 1px solid var(--accent); background: white; font-size: 0.75rem; white-space: nowrap; cursor: pointer; color: var(--accent); }
-        .filter-btn.active { background: var(--accent); color: white; }
+        /* カレンダー */
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: white; padding: 8px; border-radius: 20px; border: 2px solid var(--sub-accent); }
+        .day { min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border-radius: 10px; cursor: pointer; padding-top: 4px; border: 1px solid transparent; transition: 0.2s; }
+        .day:active { background: var(--sub-accent); }
+        .day.selected { border: 2px solid var(--accent); background: #fff5f0; }
+        .today { background: #fff0f0; font-weight: bold; }
+        .day-num { font-size: 0.9rem; margin-bottom: 2px; }
+        .day-profit { font-size: 0.55rem; font-weight: bold; text-align: center; line-height: 1.2; }
+        .p-plus { color: var(--win-text); }
+        .p-minus { color: var(--lose-text); }
+
+        /* 総損益カード */
+        .total-card { background: linear-gradient(135deg, var(--accent), var(--sub-accent)); color: white; padding: 20px; border-radius: 20px; margin-bottom: 15px; text-align: center; box-shadow: 0 4px 15px rgba(255,183,178,0.3); }
+        .total-val { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
 
         .card { background: var(--card-bg); padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 1px solid var(--sub-accent); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         h3 { margin-top: 0; color: var(--accent); border-bottom: 2px solid var(--sub-accent); padding-bottom: 5px; font-size: 1.1rem; }
         
-        .illust-box { width: 100%; height: 80px; background: #fafafa; border-radius: 10px; margin: 10px 0; display: flex; align-items: center; justify-content: center; }
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px 0; }
+        .filter-btn { padding: 6px 15px; border-radius: 20px; border: 1px solid var(--accent); background: white; color: var(--accent); white-space: nowrap; font-size: 0.75rem; cursor: pointer; }
+        .filter-btn.active { background: var(--accent); color: white; }
+
+        .chart-img-container { width: 100%; margin: 10px 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--sub-accent); background: white; }
+        .chart-img-container img { width: 100%; display: block; }
         .badge { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 0.65rem; font-weight: bold; margin-bottom: 5px; color: white; }
 
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; height: 70px; border-radius: 25px 25px 0 0; z-index: 100; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; color: #bbb; }
+        input, textarea { width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid var(--sub-accent); border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        button { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e5a09c; }
+        .btn-sub { background: #d1d1d1; box-shadow: 0 4px 0 #bbb; }
+
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; height: 75px; border-radius: 25px 25px 0 0; z-index: 100; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; color: #bbb; cursor: pointer; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-        
-        /* 共通UIパーツ */
-        input, textarea { width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid var(--sub-accent); border-radius: 12px; box-sizing: border-box; }
-        button { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 25px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<header>ゆる株日記 Pro</header>
+<header>ゆる株日記 Ultimate</header>
 
-<div id="tab-cal" class="tab-content active"><div class="calendar" id="calendar"></div><div id="daily-detail-area" style="margin-top:20px; display:none;"><div class="card"><h3 id="detail-date"></h3><div id="trade-list-inner"></div><button onclick="openForm()">＋ 追加</button></div></div></div>
-<div id="tab-stats" class="tab-content"><div class="card"><h3>損益推移</h3><div style="height:150px;"><canvas id="profitChart"></canvas></div></div><div id="holding-list"></div></div>
+<div id="tab-cal" class="tab-content active">
+    <div class="calendar" id="calendar"></div>
+    <div id="daily-detail-area" style="margin-top:20px; display:none;">
+        <div class="card">
+            <h3 id="detail-date">日付</h3>
+            <div id="trade-list-inner" style="margin-bottom:15px;"></div>
+            <button onclick="openForm()">＋ この日に記録を追加</button>
+            <button class="btn-sub" onclick="closeDetail()" style="margin-top:10px;">閉じる</button>
+        </div>
+    </div>
+</div>
+
+<div id="tab-stats" class="tab-content">
+    <div class="total-card">
+        <div>累計損益合計</div>
+        <div class="total-val" id="grand-total">0円</div>
+    </div>
+    <div class="card">
+        <h3>損益トレンド</h3>
+        <div style="height:180px;"><canvas id="profitChart"></canvas></div>
+    </div>
+    <div id="holding-list"></div>
+    <div class="card">
+        <h3>保有株の追加</h3>
+        <input type="text" id="hold-name" placeholder="銘柄名">
+        <input type="number" id="hold-price" placeholder="取得単価">
+        <input type="number" id="hold-current" placeholder="現在値">
+        <button onclick="addHolding()">リストに追加</button>
+    </div>
+</div>
 
 <div id="tab-dict" class="tab-content">
     <div class="filter-bar">
         <button class="filter-btn active" onclick="filterDict('all', this)">すべて</button>
-        <button class="filter-btn" onclick="filterDict('buy', this)">買い(反転)</button>
-        <button class="filter-btn" onclick="filterDict('sell', this)">売り(反転)</button>
-        <button class="filter-btn" onclick="filterDict('trend', this)">継続</button>
+        <button class="filter-btn" onclick="filterDict('pattern', this)">チャート形状</button>
+        <button class="filter-btn" onclick="filterDict('term', this)">投資用語</button>
     </div>
-    
-    <div id="dict-container">
-        </div>
+    <div id="dict-container"></div>
 </div>
 
 <div id="tab-entry" class="tab-content">
-    <div class="card"><h3>記録</h3><input type="text" id="stock-name" placeholder="銘柄"><input type="number" id="buy-price" placeholder="買値"><input type="number" id="sell-price" placeholder="売値"><textarea id="feedback" placeholder="メモ"></textarea><button onclick="saveTrade()">保存</button></div>
+    <div class="card">
+        <h3 id="entry-title">トレード記録</h3>
+        <input type="text" id="stock-name" placeholder="銘柄名">
+        <input type="number" id="buy-price" placeholder="買値">
+        <input type="number" id="sell-price" placeholder="売値">
+        <textarea id="feedback" placeholder="ひとことメモ"></textarea>
+        <button onclick="saveTrade()">保存する</button>
+        <button class="btn-sub" onclick="showTab('cal')" style="margin-top:10px;">キャンセル</button>
+    </div>
 </div>
 
 <nav class="nav">
@@ -73,49 +121,21 @@
 </nav>
 
 <script>
-    // 辞書データ（網羅的ライブラリ）
+    // 辞書・用語データ
     const dictData = [
-        { type: 'buy', name: 'ダブルボトム', desc: 'Wの形。二度の安値更新失敗は強い反発のサイン。', path: 'M10,20 L30,60 L50,30 L70,60 L90,10', color: '--lose-text' },
-        { type: 'sell', name: 'ダブルトップ', desc: 'Mの形。二度の高値突破失敗は下落への転換。', path: 'M10,60 L30,20 L50,50 L70,20 L90,60', color: '--win-text' },
-        { type: 'sell', name: '三尊 (H&S)', desc: '天井の王道。中央が高い3つの山が出たら逃げ。', path: 'M10,60 L25,40 L40,50 L50,20 L60,50 L75,40 L90,60', color: '--win-text' },
-        { type: 'buy', name: '逆三尊', desc: '底値の王道。3つの谷の後は上昇トレンドへ。', path: 'M10,20 L25,40 L40,30 L50,60 L60,30 L75,40 L90,20', color: '--lose-text' },
-        { type: 'trend', name: '上昇フラッグ', desc: '急騰後の旗のような保ち合い。上放れで再度上昇。', path: 'M10,60 L30,20 L40,35 L55,25 L70,40 L90,10', color: '--trend-text' },
-        { type: 'trend', name: '上昇ペナント', desc: '三角形の収束。エネルギーを溜めて上へ爆発。', path: 'M10,60 L30,20 L50,45 L65,30 L75,40 L95,10', color: '--trend-text' },
-        { type: 'buy', name: 'カップ・ウィズ・ハンドル', desc: '取っ手付きのカップ。最強の上昇シグナルの一つ。', path: 'M10,10 C10,60 80,60 80,10 L80,30 L95,20', color: '--lose-text' },
-        { type: 'buy', name: 'V字回復', desc: '急落からの急反発。勢いが強く追随買いが入りやすい。', path: 'M10,10 L50,60 L90,10', color: '--lose-text' },
-        { type: 'trend', name: 'アセンディング・トライアングル', desc: '高値一定で安値が切り上がる形。上抜け期待大。', path: 'M10,60 L40,20 L50,40 L70,20 L80,40 L95,20', color: '--trend-text' },
-        { type: 'sell', name: 'ディセンディング・トライアングル', desc: '安値一定で高値が切り下がる。下落への恐怖。', path: 'M10,20 L40,60 L50,40 L70,60 L80,40 L95,60', color: '--win-text' }
+        { cat: 'pattern', type: 'buy', name: 'ダブルボトム', desc: 'Wの形。底を二度叩いても下がらない強い反発サイン。', img: 'http://googleusercontent.com/image_collection/image_retrieval/2225657955806138147' },
+        { cat: 'pattern', type: 'sell', name: 'ダブルトップ', desc: 'Mの形。二度の高値更新失敗。下落への転換に注意。', img: 'http://googleusercontent.com/image_collection/image_retrieval/12616729535033234129' },
+        { cat: 'pattern', type: 'sell', name: '三尊', desc: '天井の王道。中央が高い3つの山。逃げの合図。', img: 'http://googleusercontent.com/image_collection/image_retrieval/18367577657166717464' },
+        { cat: 'pattern', type: 'buy', name: '逆三尊', desc: '大底の合図。3つの谷を経て上昇へ。', img: 'http://googleusercontent.com/image_collection/image_retrieval/8881973405323841729' },
+        { cat: 'term', type: 'buy', name: '押し目買い', desc: '上昇トレンド中、一時的に安くなったタイミングで買うこと。「絶好のチャンス」となることが多い。' },
+        { cat: 'term', type: 'sell', name: '損切り (ロスカット)', desc: '損失が拡大する前に、あえてマイナスを確定させて撤退すること。資産を守るために最も重要なスキル。' },
+        { cat: 'term', type: 'sell', name: 'ナンピン', desc: '買った後に下がった際、平均取得単価を下げるために買い増すこと。失敗すると損失が加速する「諸刃の剣」。' },
+        { cat: 'term', type: 'buy', name: '利確 (利食い)', desc: '含み益が出ている状態で売却し、利益を確定させること。「頭と尻尾はくれてやれ」の精神が大事。' },
+        { cat: 'term', type: 'trend', name: '追撃買い', desc: '上昇が確認できた後、さらに利益を伸ばすために追加で買い増すこと。' }
     ];
 
-    function filterDict(type, btn) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderDict(type);
-    }
-
-    function renderDict(filterType = 'all') {
-        const container = document.getElementById('dict-container');
-        container.innerHTML = "";
-        dictData.forEach(item => {
-            if (filterType !== 'all' && item.type !== filterType) return;
-            const badgeLabel = item.type === 'buy' ? '買いチャンス' : item.type === 'sell' ? '売り・警戒' : 'トレンド継続';
-            container.innerHTML += `
-                <div class="card">
-                    <span class="badge" style="background:var(${item.color})">${badgeLabel}</span>
-                    <h3>${item.name}</h3>
-                    <div class="illust-box">
-                        <svg width="100" height="70" viewBox="0 0 100 70">
-                            <path d="${item.path}" fill="none" stroke="var(${item.color})" stroke-width="3" stroke-linecap="round" />
-                        </svg>
-                    </div>
-                    <p style="font-size:0.75rem;">${item.desc}</p>
-                </div>`;
-        });
-    }
-
-    // 他の基本機能（カレンダー・保存等）のJS
-    let trades = JSON.parse(localStorage.getItem('kabu_trades_v3') || '{}');
-    let holdings = JSON.parse(localStorage.getItem('kabu_holdings_v3') || '[]');
+    let trades = JSON.parse(localStorage.getItem('kabu_trades_v5.2') || '{}');
+    let holdings = JSON.parse(localStorage.getItem('kabu_holdings_v5.2') || '[]');
     let selectedDate = "", myChart = null;
 
     function showTab(tab) {
@@ -124,27 +144,40 @@
         document.getElementById('tab-' + tab).classList.add('active');
         document.getElementById('nav-' + tab).classList.add('active');
         if(tab === 'cal') renderCalendar();
-        if(tab === 'stats') { renderStats(); initChart(); }
+        if(tab === 'stats') { renderStats(); initChart(); updateGrandTotal(); }
         if(tab === 'dict') renderDict();
     }
 
     function renderCalendar() {
         const cal = document.getElementById('calendar'); cal.innerHTML = "";
-        const now = new Date(); const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+        const now = new Date(); const y = now.getFullYear(); const m = now.getMonth();
+        const days = new Date(y, m+1, 0).getDate();
         for(let i=1; i<=days; i++){
-            const dStr = `${now.getFullYear()}-${now.getMonth()+1}-${i}`;
-            const el = document.createElement('div'); el.className = 'day' + (i === now.getDate() ? ' today' : '');
+            const dStr = `${y}-${m+1}-${i}`;
+            const el = document.createElement('div');
+            el.className = 'day' + (i === now.getDate() ? ' today' : '') + (selectedDate === dStr ? ' selected' : '');
             let p = 0; if(trades[dStr]) trades[dStr].forEach(t => p += t.profit);
             el.innerHTML = `<div class="day-num">${i}</div>` + (p !== 0 ? `<div class="day-profit ${p>0?'p-plus':'p-minus'}">${p>0?'+':''}${p.toLocaleString()}</div>` : "");
-            el.onclick = () => { selectedDate = dStr; document.getElementById('daily-detail-area').style.display = 'block'; document.getElementById('detail-date').innerText = dStr; renderDayTrades(); };
+            el.onclick = () => { selectedDate = dStr; renderCalendar(); document.getElementById('daily-detail-area').style.display = 'block'; document.getElementById('detail-date').innerText = dStr; renderDayTrades(); };
             cal.appendChild(el);
         }
     }
 
+    function updateGrandTotal() {
+        let total = 0;
+        Object.keys(trades).forEach(date => trades[date].forEach(t => total += t.profit));
+        document.getElementById('grand-total').innerText = total.toLocaleString() + "円";
+        document.getElementById('grand-total').style.color = total >= 0 ? 'white' : '#ffcdd2';
+    }
+
     function renderDayTrades() {
         const inner = document.getElementById('trade-list-inner'); inner.innerHTML = "";
-        (trades[selectedDate] || []).forEach((t, i) => {
-            inner.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;"><span>${t.name}</span><span>${t.profit}円</span></div>`;
+        const ds = trades[selectedDate] || [];
+        if(ds.length === 0) inner.innerHTML = "<p style='color:#ccc;'>記録なし</p>";
+        ds.forEach((t, i) => {
+            inner.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <div><strong>${t.name}</strong><br><small>${t.profit.toLocaleString()}円</small></div>
+                <button onclick="deleteTrade(${i})" class="btn-sub" style="width:auto; padding:4px 8px; font-size:0.6rem;">消去</button></div>`;
         });
     }
 
@@ -152,9 +185,10 @@
         const n = document.getElementById('stock-name').value;
         const b = parseFloat(document.getElementById('buy-price').value) || 0;
         const s = parseFloat(document.getElementById('sell-price').value) || 0;
+        if(!n || !selectedDate) return alert("日付を選択して銘柄名を入力してね");
         if(!trades[selectedDate]) trades[selectedDate] = [];
         trades[selectedDate].push({name:n, buy:b, sell:s, profit: s-b});
-        localStorage.setItem('kabu_trades_v3', JSON.stringify(trades));
+        localStorage.setItem('kabu_trades_v5.2', JSON.stringify(trades));
         showTab('cal');
     }
 
@@ -164,23 +198,50 @@
         const sorted = Object.keys(trades).sort((a,b) => new Date(a) - new Date(b));
         let cum = 0; const ls = [], ds = [];
         sorted.forEach(d => { let dp = 0; trades[d].forEach(t => dp += t.profit); cum += dp; ls.push(d.split('-').slice(1).join('/')); ds.push(cum); });
-        myChart = new Chart(ctx, { type: 'line', data: { labels: ls, datasets: [{ data: ds, borderColor: '#ffb7b2', tension: 0.3, fill: true, backgroundColor: 'rgba(255,183,178,0.2)' }] }, options: { plugins: { legend: { display: false } } } });
+        myChart = new Chart(ctx, { type: 'line', data: { labels: ls, datasets: [{ data: ds, borderColor: '#ffb7b2', backgroundColor: 'rgba(255,183,178,0.2)', fill: true, tension: 0.3 }] }, options: { plugins: { legend: { display: false } } } });
     }
 
     function renderStats() {
         const l = document.getElementById('holding-list'); l.innerHTML = "<h3>保有株</h3>";
-        holdings.forEach(h => l.innerHTML += `<div class="card"><strong>${h.name}</strong>: ${h.current - h.price}円</div>`);
-    }
-
-    function openForm() { document.getElementById('tab-cal').classList.remove('active'); document.getElementById('tab-entry').classList.add('active'); }
-    function renderDict(filterType = 'all') {
-        const container = document.getElementById('dict-container'); container.innerHTML = "";
-        dictData.forEach(item => {
-            if (filterType !== 'all' && item.type !== filterType) return;
-            const badgeLabel = item.type === 'buy' ? '買い反転' : item.type === 'sell' ? '売り反転' : 'トレンド継続';
-            container.innerHTML += `<div class="card"><span class="badge" style="background:var(${item.color})">${badgeLabel}</span><h3>${item.name}</h3><div class="illust-box"><svg width="100" height="50" viewBox="0 0 100 70"><path d="${item.path}" fill="none" stroke="var(${item.color})" stroke-width="4" stroke-linecap="round" /></svg></div><p style="font-size:0.7rem;">${item.desc}</p></div>`;
+        holdings.forEach((h, i) => {
+            const p = h.current - h.price;
+            l.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>${h.name}</strong><br><small>取得:${h.price} / 現在:${h.current}</small></div>
+                <div style="text-align:right;"><span class="${p>=0?'p-plus':'p-minus'}">${p>=0?'+':''}${p.toLocaleString()}円</span><br>
+                <button onclick="removeHolding(${i})" class="btn-sub" style="width:auto; padding:2px 8px; font-size:0.6rem; margin-top:5px;">売却/削除</button></div></div>`;
         });
     }
+
+    function addHolding() {
+        const n = document.getElementById('hold-name').value, p = document.getElementById('hold-price').value, c = document.getElementById('hold-current').value;
+        if(!n || !p || !c) return;
+        holdings.push({name:n, price:parseFloat(p), current:parseFloat(c)});
+        localStorage.setItem('kabu_holdings_v5.2', JSON.stringify(holdings)); renderStats();
+    }
+
+    function removeHolding(i) { holdings.splice(i, 1); localStorage.setItem('kabu_holdings_v5.2', JSON.stringify(holdings)); renderStats(); }
+    function deleteTrade(i) { trades[selectedDate].splice(i, 1); if(trades[selectedDate].length===0) delete trades[selectedDate]; localStorage.setItem('kabu_trades_v5.2', JSON.stringify(trades)); renderDayTrades(); renderCalendar(); }
+
+    function filterDict(cat, btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderDict(cat);
+    }
+
+    function renderDict(filterCat = 'all') {
+        const container = document.getElementById('dict-container'); container.innerHTML = "";
+        dictData.forEach(item => {
+            if (filterCat !== 'all' && item.cat !== filterCat) return;
+            const badgeColor = item.type === 'buy' ? 'var(--lose-text)' : item.type === 'sell' ? 'var(--win-text)' : 'var(--trend-text)';
+            const badgeLabel = item.type === 'buy' ? 'チャンス' : item.type === 'sell' ? '警戒/出口' : '継続';
+            let content = `<div class="card"><span class="badge" style="background:${badgeColor}">${badgeLabel}</span><h3>${item.name}</h3>`;
+            if(item.img) content += `<div class="chart-img-container"><img src="${item.img}"></div>`;
+            content += `<p style="font-size:0.75rem; margin:0;">${item.desc}</p></div>`;
+            container.innerHTML += content;
+        });
+    }
+
+    function openForm() { document.getElementById('tab-cal').classList.remove('active'); document.getElementById('tab-entry').classList.add('active'); document.getElementById('entry-title').innerText = selectedDate + " の記録"; }
 
     renderCalendar();
 </script>
