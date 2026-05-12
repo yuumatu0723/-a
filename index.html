@@ -3,105 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ゆる株マネージャー Pro v17.1</title>
+    <title>ゆる株マネージャー Pro v17.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --accent: #ffb7b2; --win: #ff5252; --lose: #4caf50; --bg: #fffcf9; --sat: #5dade2; --sun: #ec7063; }
         body { font-family: 'Hiragino Sans', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: #444; }
         header { background: var(--accent); color: white; text-align: center; padding: 15px; font-weight: bold; border-radius: 0 0 20px 20px; }
+        
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
+
+        /* キャラクター */
         .chara-box { background: white; border-radius: 20px; padding: 15px; margin: 10px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee; }
-        .chara-img { font-size: 2rem; background: #fff5f0; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent); }
+        .chara-img { font-size: 2.2rem; background: #fff5f0; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent); }
         .chara-msg { font-size: 0.8rem; font-weight: bold; background: #fdfdfd; padding: 10px; border-radius: 12px; flex: 1; border: 1px solid #eee; }
+
+        /* カレンダー */
         .calendar-container { background: white; padding: 10px; border-radius: 15px; border: 1px solid #eee; }
         .weekday-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; color: #888; }
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .day { min-height: 70px; display: flex; flex-direction: column; align-items: center; border-radius: 8px; cursor: pointer; background: #fafafa; border: 1.5px solid transparent; }
+        .day { min-height: 75px; display: flex; flex-direction: column; align-items: center; border-radius: 8px; cursor: pointer; background: #fafafa; border: 1.5px solid transparent; transition: 0.2s; }
         .day.selected { border-color: var(--accent); background: #fff5f0; }
         .day-num { font-size: 0.8rem; margin-top: 4px; }
-        .day-info { font-size: 0.5rem; font-weight: 900; text-align: center; width: 100%; }
+        .day-info { font-size: 0.5rem; font-weight: 900; text-align: center; width: 100%; overflow: hidden; }
         .day-sat { color: var(--sat); }
         .day-sun { color: var(--sun); }
+
+        /* 統計カード */
         .card { background: white; padding: 18px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         h3 { margin: 0 0 12px; font-size: 0.9rem; color: var(--accent); border-left: 5px solid var(--accent); padding-left: 10px; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; height: 75px; }
+
+        .btn-group { display: flex; gap: 4px; margin-bottom: 10px; background: #eee; padding: 3px; border-radius: 10px; }
+        .btn-sm { flex: 1; padding: 8px; font-size: 0.7rem; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #888; }
+        .btn-sm.active { background: white; color: var(--accent); }
+
+        /* ナビゲーション */
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; height: 75px; z-index: 100; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #bbb; cursor: pointer; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-        label { display: block; font-size: 0.75rem; font-weight: bold; color: #666; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .main-btn { background: var(--accent); color: white; border: none; padding: 16px; width: 100%; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+
+        /* 入力フォーム（6項目） */
+        label { display: block; font-size: 0.75rem; font-weight: bold; color: #666; margin-top: 12px; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 4px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 0.9rem; }
+        .main-btn { background: var(--accent); color: white; border: none; padding: 16px; width: 100%; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 10px rgba(255,183,178,0.4); }
     </style>
 </head>
 <body>
 
-<header>📈 ゆる株 Pro v17.1</header>
+<header>📈 ゆる株マネージャー Pro v17.2</header>
 
+<!-- キャラクターメッセージ -->
 <div class="chara-box">
-    <div class="chara-img">🐣</div>
-    <div class="chara-msg" id="chara-talk">記録機能をメンテナンスしたよ！今度は大丈夫なはず！</div>
+    <div class="chara-img" id="chara-face">🐣</div>
+    <div class="chara-msg" id="chara-talk">侑希さん、準備はいい？<br>今日も精密なトレードを記録しよう！</div>
 </div>
 
+<!-- カレンダータブ -->
 <div id="tab-cal" class="tab-content active">
     <div class="calendar-container">
         <div class="weekday-header">
-            <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="day-sat">土</span>
+            <span class="day-sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="day-sat">土</span>
         </div>
         <div class="calendar" id="calendar"></div>
     </div>
     
     <div id="daily-detail-area" style="margin-top:15px; display:none;">
         <div class="card">
-            <h3 id="detail-date"></h3>
+            <h3 id="detail-date">詳細情報</h3>
             <div id="trade-list-inner"></div>
             <button class="main-btn" onclick="openForm()">＋ トレードを記録</button>
         </div>
     </div>
 </div>
 
-<!-- 統計タブ、入力タブは前回の構造を維持 -->
+<!-- 総損益タブ -->
 <div id="tab-stats" class="tab-content">
     <div class="card" style="background: linear-gradient(135deg, var(--accent), #ff9a9e); color:white; text-align:center; border:none; padding:25px 15px;">
-        <div style="font-size:0.8rem; opacity:0.9;">通算合計損益</div>
+        <div style="font-size:0.8rem; opacity:0.9;">通算損益 / 通算回収率</div>
         <div style="font-size:2rem; font-weight:900;" id="grand-total">0円</div>
+        <div style="font-size:1rem; font-weight:bold; margin-top:5px;" id="grand-total-pct">回収率: 0.00%</div>
     </div>
+    
     <div class="card">
-        <h3>収益分析グラフ</h3>
-        <canvas id="profitChart" height="180"></canvas>
+        <h3>期間別収益（棒グラフ）</h3>
+        <div class="btn-group">
+            <button class="btn-sm active" id="btn-day" onclick="updateChartMode('day')">1日ごと</button>
+            <button class="btn-sm" id="btn-week" onclick="updateChartMode('week')">1週間ごと</button>
+            <button class="btn-sm" id="btn-month" onclick="updateChartMode('month')">1ヶ月ごと</button>
+        </div>
+        <canvas id="profitChart" height="200"></canvas>
     </div>
 </div>
 
+<!-- 入力タブ -->
 <div id="tab-entry" class="tab-content">
     <div class="card">
-        <h3>トレード記録（6項目）</h3>
-        <label>1. 銘柄名</label><input type="text" id="stock-name">
+        <h3>トレード記録（6項目入力）</h3>
+        <label>1. 銘柄名</label>
+        <input type="text" id="stock-name" placeholder="例：NTT (9432)">
+        
         <div style="display:flex; gap:10px;">
-            <div style="flex:1;"><label>2. 買値</label><input type="number" id="buy-price"></div>
-            <div style="flex:1;"><label>3. 売値</label><input type="number" id="sell-price"></div>
+            <div style="flex:1;"><label>2. 買値 (合計)</label><input type="number" id="buy-price" placeholder="¥"></div>
+            <div style="flex:1;"><label>3. 売値 (合計)</label><input type="number" id="sell-price" placeholder="¥"></div>
         </div>
-        <label>4. 購入理由</label><textarea id="buy-reason" rows="2"></textarea>
-        <label>5. 売却理由</label><textarea id="sell-reason" rows="2"></textarea>
-        <label>6. 反省点</label><textarea id="feedback" rows="2"></textarea>
-        <button class="main-btn" onclick="saveTrade()">保存する</button>
-        <button style="background:none; border:none; color:#999; width:100%; margin-top:10px;" onclick="showTab('cal')">戻る</button>
+        
+        <label>4. 購入理由</label>
+        <textarea id="buy-reason" rows="2" placeholder="エントリーの根拠は？"></textarea>
+        
+        <label>5. 売却理由</label>
+        <textarea id="sell-reason" rows="2" placeholder="なぜ今売った？"></textarea>
+        
+        <label>6. 反省点</label>
+        <textarea id="feedback" rows="2" placeholder="改善点は？"></textarea>
+        
+        <button class="main-btn" onclick="saveTrade()">この内容で保存</button>
+        <button style="background:none; border:none; color:#999; width:100%; margin-top:15px; font-size:0.8rem;" onclick="showTab('cal')">キャンセルして戻る</button>
     </div>
 </div>
 
+<!-- ナビゲーション -->
 <nav class="nav">
-    <div class="nav-item active" onclick="showTab('cal')">📅<br>カレンダー</div>
-    <div class="nav-item" onclick="showTab('stats')">📊<br>総損益</div>
+    <div class="nav-item active" id="nav-cal" onclick="showTab('cal')">📅<br>カレンダー</div>
+    <div class="nav-item" id="nav-stats" onclick="showTab('stats')">📊<br>総損益</div>
 </nav>
 
 <script>
-    // キー名を固定。過去のデータがある場合はそれを読み込む。
-    let trades = JSON.parse(localStorage.getItem('yuru_kabu_final') || '{}');
+    // データ管理
+    let trades = JSON.parse(localStorage.getItem('yuru_kabu_v17_2') || '{}');
     let selectedDate = "";
+    let myChart = null;
+    let chartMode = 'day';
+
+    const charaMsgs = [
+        "損切りは勇気！侑希さんならできる！",
+        "回収率100%超えを目指してコツコツいこう。",
+        "精密な記録が未来の利益を作るんだよ！",
+        "今日はどんな銘柄を狙ってるの？"
+    ];
 
     function showTab(tab) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('tab-' + tab).classList.add('active');
+        const navItem = document.getElementById('nav-' + (tab === 'entry' ? 'cal' : tab));
+        if(navItem) navItem.classList.add('active');
+        
         if(tab === 'cal') renderCalendar();
-        if(tab === 'stats') updateStats();
+        if(tab === 'stats') { updateGrandTotal(); initProfitChart(); }
+        
+        // メッセージ更新
+        document.getElementById('chara-talk').innerHTML = charaMsgs[Math.floor(Math.random() * charaMsgs.length)];
     }
 
     function renderCalendar() {
@@ -114,24 +165,34 @@
 
         for(let i=1; i<=daysInMonth; i++){
             const dStr = `${year}-${month+1}-${i}`;
+            const dateObj = new Date(year, month, i);
+            const dayOfWeek = dateObj.getDay();
+            
             const el = document.createElement('div');
             el.className = 'day' + (selectedDate === dStr ? ' selected' : '');
             
-            let p = 0;
-            if(trades[dStr]) trades[dStr].forEach(t => p += (t.profit || 0));
+            let p = 0, b = 0, s = 0;
+            if(trades[dStr]) {
+                trades[dStr].forEach(t => { p += t.profit; b += t.buy; s += t.sell; });
+            }
+            const rr = b !== 0 ? ((s/b)*100).toFixed(1) : 0;
             
-            const dayOfWeek = new Date(year, month, i).getDay();
-            let numClass = dayOfWeek === 6 ? "day-sat" : (dayOfWeek === 0 ? "day-sun" : "");
+            let numClass = "";
+            if(dayOfWeek === 6) numClass = "day-sat";
+            if(dayOfWeek === 0) numClass = "day-sun";
 
             el.innerHTML = `<div class="day-num ${numClass}">${i}</div>`;
-            if(p !== 0) {
-                el.innerHTML += `<div class="day-info" style="color:${p>0?'var(--win)':'var(--lose)'}">${p>0?'+':''}${p.toLocaleString()}</div>`;
+            if(p !== 0 || b !== 0) {
+                el.innerHTML += `
+                    <div class="day-info" style="color:${p>=0?'var(--win)':'var(--lose)'}">${p>0?'+':''}${p.toLocaleString()}</div>
+                    <div class="day-info" style="color:#aaa">${rr}%</div>
+                `;
             }
             el.onclick = () => { 
                 selectedDate = dStr; 
                 renderCalendar(); 
                 document.getElementById('daily-detail-area').style.display = 'block'; 
-                document.getElementById('detail-date').innerText = dStr; 
+                document.getElementById('detail-date').innerText = dStr + " の取引"; 
                 renderDayTrades(); 
             };
             cal.appendChild(el);
@@ -141,24 +202,38 @@
     function renderDayTrades() {
         const inner = document.getElementById('trade-list-inner'); inner.innerHTML = "";
         const dayTrades = trades[selectedDate] || [];
-        dayTrades.forEach((t) => {
-            inner.innerHTML += `<div style="border-bottom:1px solid #eee; padding:10px 0; font-size:0.8rem;">
-                <b>${t.name}</b>: <span style="color:${t.profit>=0?'var(--win)':'var(--lose)'}">${t.profit.toLocaleString()}円</span>
-                <div style="font-size:0.7rem; color:#888;">理由: ${t.buyReason || '-'} / 反省: ${t.feedback || '-'}</div>
-            </div>`;
+        if(dayTrades.length === 0) {
+            inner.innerHTML = "<p style='font-size:0.8rem; color:#999;'>取引記録がありません。</p>";
+            return;
+        }
+        dayTrades.forEach((t, i) => {
+            inner.innerHTML += `
+                <div style="border-bottom:1px solid #eee; padding:12px 0; font-size:0.8rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:bold;">
+                        <span>${t.name}</span>
+                        <span style="color:${t.profit>=0?'var(--win)':'var(--lose)'}">${t.profit.toLocaleString()}円 (${((t.sell/t.buy)*100).toFixed(1)}%)</span>
+                    </div>
+                    <div style="color:#666; line-height:1.5;">
+                        <div><small>買値:</small> ¥${t.buy.toLocaleString()} / <small>売値:</small> ¥${t.sell.toLocaleString()}</div>
+                        <div style="margin-top:4px;"><b>購:</b> ${t.buyReason || '-'}</div>
+                        <div><b>売:</b> ${t.sellReason || '-'}</div>
+                        <div style="color:var(--accent);"><b>反:</b> ${t.feedback || '-'}</div>
+                    </div>
+                </div>`;
         });
     }
+
+    function openForm() { showTab('entry'); }
 
     function saveTrade() {
         const n = document.getElementById('stock-name').value;
         const b = parseFloat(document.getElementById('buy-price').value) || 0;
         const s = parseFloat(document.getElementById('sell-price').value) || 0;
-
-        if(!selectedDate) { alert("カレンダーの日付を選んでから入力してね！"); return; }
-        if(!n) { alert("銘柄名を入力してね！"); return; }
+        
+        if(!selectedDate) return alert("カレンダーで日付を選んでね！");
+        if(!n || b === 0) return alert("銘柄名と買値は入力してね！");
 
         if(!trades[selectedDate]) trades[selectedDate] = [];
-        
         trades[selectedDate].push({
             name: n, buy: b, sell: s, profit: s - b,
             buyReason: document.getElementById('buy-reason').value,
@@ -166,29 +241,66 @@
             feedback: document.getElementById('feedback').value
         });
 
-        localStorage.setItem('yuru_kabu_final', JSON.stringify(trades));
+        localStorage.setItem('yuru_kabu_v17_2', JSON.stringify(trades));
         
-        // クリア処理
-        document.getElementById('stock-name').value = "";
-        document.getElementById('buy-price').value = "";
-        document.getElementById('sell-price').value = "";
-        document.getElementById('buy-reason').value = "";
-        document.getElementById('sell-reason').value = "";
-        document.getElementById('feedback').value = "";
+        // 入力クリア
+        ["stock-name", "buy-price", "sell-price", "buy-reason", "sell-reason", "feedback"].forEach(id => {
+            document.getElementById(id).value = "";
+        });
 
         showTab('cal');
         renderDayTrades();
     }
 
-    function updateStats() {
-        let total = 0;
-        Object.values(trades).flat().forEach(t => total += (t.profit || 0));
-        document.getElementById('grand-total').innerText = total.toLocaleString() + "円";
+    function updateGrandTotal() {
+        let pTotal = 0, bSum = 0, sSum = 0;
+        Object.values(trades).flat().forEach(t => { pTotal += t.profit; bSum += t.buy; sSum += t.sell; });
+        document.getElementById('grand-total').innerText = pTotal.toLocaleString() + "円";
+        document.getElementById('grand-total-pct').innerText = "回収率: " + (bSum !== 0 ? ((sSum/bSum)*100).toFixed(2) : "0.00") + "%";
     }
 
-    function openForm() { 
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-entry').classList.add('active');
+    function updateChartMode(mode) {
+        chartMode = mode;
+        document.querySelectorAll('.btn-sm').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + mode).classList.add('active');
+        initProfitChart();
+    }
+
+    function initProfitChart() {
+        const ctx = document.getElementById('profitChart').getContext('2d');
+        if(myChart) myChart.destroy();
+
+        const sortedDates = Object.keys(trades).sort((a,b) => new Date(a) - new Date(b));
+        let dataMap = {};
+
+        sortedDates.forEach(d => {
+            let dayP = 0; trades[d].forEach(t => dayP += t.profit);
+            let dateObj = new Date(d);
+            let key = "";
+            
+            if(chartMode === 'day') key = (dateObj.getMonth()+1)+"/"+dateObj.getDate();
+            else if(chartMode === 'week') {
+                const startOfWeek = new Date(dateObj.setDate(dateObj.getDate() - dateObj.getDay()));
+                key = (startOfWeek.getMonth()+1)+"/"+startOfWeek.getDate() + "週";
+            }
+            else key = (dateObj.getMonth()+1) + "月";
+
+            dataMap[key] = (dataMap[key] || 0) + dayP;
+        });
+
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dataMap),
+                datasets: [{
+                    label: '損益',
+                    data: Object.values(dataMap),
+                    backgroundColor: Object.values(dataMap).map(v => v>=0 ? '#ffb7b2' : '#a8e6cf'),
+                    borderRadius: 5
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
     }
 
     renderCalendar();
