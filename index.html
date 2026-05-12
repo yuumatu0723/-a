@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゆる株日記</title>
+    <style>
+        :root {
+            --main-bg: #fff9f5;
+            --accent: #ffb7b2;
+            --sub-accent: #ffdac1;
+            --text-color: #5d5d5d;
+            --card-bg: #ffffff;
+            --win: #ff8b94;
+            --lose: #a8e6cf;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            background-color: var(--main-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding-bottom: 80px;
+        }
+        header { background: var(--accent); color: white; text-align: center; padding: 15px; font-weight: bold; border-radius: 0 0 20px 20px; }
+        
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: white; padding: 10px; border-radius: 15px; border: 2px solid var(--sub-accent); }
+        .day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; font-size: 0.9rem; }
+        .day:hover { background: var(--sub-accent); }
+        .today { border: 2px solid var(--accent); font-weight: bold; }
+
+        .card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid var(--sub-accent); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--sub-accent); border-radius: 10px; box-sizing: border-box; outline: none; background: #fff; }
+        button { background: var(--accent); color: white; border: none; padding: 12px; width: 100%; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; height: 65px; border-radius: 20px 20px 0 0; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; cursor: pointer; color: #999; }
+        .nav-item.active { color: var(--accent); }
+        .icon { font-size: 1.5rem; margin-bottom: 2px; }
+
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: var(--accent); text-align: center; }
+    </style>
+</head>
+<body>
+
+<header id="header-title">ゆる株日記</header>
+
+<div id="tab-cal" class="tab-content active">
+    <div class="calendar" id="calendar"></div>
+    <div id="day-detail" style="margin-top:20px;">
+        <p style="text-align:center; color:#bbb;">日付をタップして記録してね</p>
+    </div>
+</div>
+
+<div id="tab-stats" class="tab-content">
+    <div class="card">
+        <div>総利益累計</div>
+        <div class="stat-val" id="total-profit">¥0</div>
+    </div>
+    <h3>保有中の銘柄</h3>
+    <div id="holding-list"></div>
+    <div class="card">
+        <h4>保有株を追加</h4>
+        <input type="text" id="hold-name" placeholder="銘柄名">
+        <input type="number" id="hold-price" placeholder="取得単価">
+        <button onclick="addHolding()">リストに追加</button>
+    </div>
+</div>
+
+<div class="nav">
+    <div class="nav-item active" onclick="showTab('cal', this)"><span class="icon">📅</span>カレンダー</div>
+    <div class="nav-item" onclick="showTab('stats', this)"><span class="icon">💰</span>収益・保有</div>
+</div>
+
+<div id="entry-form" style="display:none;" class="tab-content">
+    <div class="card">
+        <h3 id="form-date">2026/05/12</h3>
+        <input type="text" id="stock-name" placeholder="銘柄名">
+        <input type="number" id="buy-price" placeholder="投資金額 (¥)">
+        <input type="number" id="sell-price" placeholder="売却金額 (¥)">
+        <textarea id="buy-reason" placeholder="買った理由"></textarea>
+        <textarea id="sell-reason" placeholder="売った理由"></textarea>
+        <textarea id="feedback" placeholder="考えたこと・反省"></textarea>
+        <button onclick="saveTrade()">記録を保存</button>
+        <button style="background:#ccc;" onclick="showTab('cal')">戻る</button>
+    </div>
+</div>
+
+<script>
+    let trades = JSON.parse(localStorage.getItem('trades') || '{}');
+    let holdings = JSON.parse(localStorage.getItem('holdings') || '[]');
+    let selectedDate = "";
+
+    function showTab(tab, el) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if(el) el.classList.add('active');
+        
+        if(tab === 'cal') {
+            document.getElementById('tab-cal').classList.add('active');
+            renderCalendar();
+        } else {
+            document.getElementById('tab-stats').classList.add('active');
+            renderStats();
+        }
+    }
+
+    function renderCalendar() {
+        const cal = document.getElementById('calendar');
+        cal.innerHTML = "";
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        
+        for(let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${now.getFullYear()}-${now.getMonth()+1}-${i}`;
+            const dayEl = document.createElement('div');
+            dayEl.className = 'day' + (i === now.getDate() ? ' today' : '');
+            if(trades[dateStr]) dayEl.style.backgroundColor = 'var(--sub-accent)';
+            dayEl.innerText = i;
+            dayEl.onclick = () => openEntry(dateStr);
+            cal.appendChild(dayEl);
+        }
+    }
+
+    function openEntry(date) {
+        selectedDate = date;
+        document.getElementById('tab-cal').classList.remove('active');
+        document.getElementById('entry-form').classList.add('active');
+        document.getElementById('form-date').innerText = date;
+        
+        const data = trades[date] || {};
+        document.getElementById('stock-name').value = data.name || "";
+        document.getElementById('buy-price').value = data.buy || "";
+        document.getElementById('sell-price').value = data.sell || "";
+        document.getElementById('buy-reason').value = data.bReason || "";
+        document.getElementById('sell-reason').value = data.sReason || "";
+        document.getElementById('feedback').value = data.feedback || "";
+    }
+
+    function saveTrade() {
+        const buy = parseFloat(document.getElementById('buy-price').value) || 0;
+        const sell = parseFloat(document.getElementById('sell-price').value) || 0;
+        const profit = sell - buy;
+        const rate = buy > 0 ? ((profit / buy) * 100).toFixed(2) : 0;
+
+        trades[selectedDate] = {
+            name: document.getElementById('stock-name').value,
+            buy, sell, profit, rate,
+            bReason: document.getElementById('buy-reason').value,
+            sReason: document.getElementById('sell-reason').value,
+            feedback: document.getElementById('feedback').value
+        };
+        localStorage.setItem('trades', JSON.stringify(trades));
+        showTab('cal');
+    }
+
+    function addHolding() {
+        const name = document.getElementById('hold-name').value;
+        const price = document.getElementById('hold-price').value;
+        if(!name || !price) return;
+        holdings.push({name, price});
+        localStorage.setItem('holdings', JSON.stringify(holdings));
+        renderStats();
+        document.getElementById('hold-name').value = "";
+        document.getElementById('hold-price').value = "";
+    }
+
+    function renderStats() {
+        const list = document.getElementById('holding-list');
+        list.innerHTML = "";
+        holdings.forEach((h, index) => {
+            list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>${h.name}</strong><br><small>取得: ¥${h.price}</small></div>
+                <button style="width:auto; padding:5px 10px; margin:0;" onclick="removeHolding(${index})">売却済</button>
+            </div>`;
+        });
+
+        let total = 0;
+        Object.values(trades).forEach(t => total += (t.profit || 0));
+        document.getElementById('total-profit').innerText = `¥${total.toLocaleString()}`;
+    }
+
+    function removeHolding(i) {
+        holdings.splice(i, 1);
+        localStorage.setItem('holdings', JSON.stringify(holdings));
+        renderStats();
+    }
+
+    renderCalendar();
+</script>
+</body>
+</html>
